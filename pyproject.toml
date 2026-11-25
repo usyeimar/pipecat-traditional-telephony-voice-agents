@@ -1,0 +1,37 @@
+[project]
+name = "pipecat-traditional-telephony-voice-agents"
+version = "0.1.0"
+description = "Pipecat voice agent that answers FreeSWITCH and Asterisk calls"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.165.0",
+    "pipecat-ai[anthropic,cartesia,deepgram,silero,websocket]>=1.17.0",
+    "pipecat-freeswitch>=0.3.0",
+    "python-dotenv>=1.2.4",
+    "uvicorn>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+]
+
+# An application, not a library: the code in src/ is run in place (uv run src/main.py), not
+# installed.
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
