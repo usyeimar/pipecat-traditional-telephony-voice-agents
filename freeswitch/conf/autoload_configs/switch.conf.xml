@@ -1,0 +1,9 @@
+<configuration name="switch.conf" description="Core Configuration">
+  <settings>
+    <param name="colorize-console" value="false"/>
+    <param name="max-sessions" value="100"/>
+    <!-- Must match the UDP range published in compose.yaml (two ports per call). -->
+    <param name="rtp-start-port" value="16384"/>
+    <param name="rtp-end-port" value="16424"/>
+  </settings>
+</configuration>

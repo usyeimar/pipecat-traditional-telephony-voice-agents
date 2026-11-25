@@ -1,0 +1,8 @@
+<configuration name="lua.conf" description="LUA Configuration">
+  <settings>
+    <!-- Hang up calls whose bot went away without closing the WebSocket (crash, lost pings, or the
+         connection failing at the start). A bot that ends the call closes the WebSocket cleanly, which
+         raises mod_audio_stream::disconnect instead, so normal hang-ups never reach this hook. -->
+    <hook event="CUSTOM" subclass="mod_audio_stream::error" script="$${conf_dir}/scripts/audio_stream_hangup.lua"/>
+  </settings>
+</configuration>

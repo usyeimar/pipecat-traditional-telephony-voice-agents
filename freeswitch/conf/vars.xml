@@ -1,0 +1,19 @@
+<include>
+  <!-- Values that come from compose.yaml (which reads them from .env). -->
+  <X-PRE-PROCESS cmd="env-set" data="external_ip=$EXTERNAL_IP"/>
+  <X-PRE-PROCESS cmd="env-set" data="internal_sip_port=$SIP_PORT"/>
+  <X-PRE-PROCESS cmd="env-set" data="default_password=$SIP_PASSWORD"/>
+  <X-PRE-PROCESS cmd="env-set" data="esl_password=$FREESWITCH_ESL_PASSWORD"/>
+  <!-- Bearer token sent to the bot on the WebSocket handshake (BOT_TOKEN on the bot side). -->
+  <X-PRE-PROCESS cmd="env-set" data="bot_token=$BOT_TOKEN"/>
+  <!-- Where the Pipecat bot listens, as seen from this container. -->
+  <X-PRE-PROCESS cmd="env-set" data="bot_ws_url=$BOT_WS_URL"/>
+
+  <X-PRE-PROCESS cmd="set" data="domain=$${local_ip_v4}"/>
+  <!-- G.711 only: 8 kHz end to end, the same audio a SIP trunk delivers, so nothing is resampled. -->
+  <X-PRE-PROCESS cmd="set" data="global_codec_prefs=PCMU,PCMA"/>
+  <X-PRE-PROCESS cmd="set" data="outbound_codec_prefs=PCMU,PCMA"/>
+  <!-- WebSocket ping interval to the bot, in seconds. mod_audio_stream drops the connection after two
+       unanswered pings, and scripts/audio_stream_hangup.lua then hangs the call up. -->
+  <X-PRE-PROCESS cmd="set" data="stream_heart_beat=5"/>
+</include>

@@ -1,0 +1,25 @@
+<include>
+  <context name="default">
+    <!-- 9000: the voice agent. Caller audio is streamed to the bot over a WebSocket (mono, 8 kHz); the
+         last argument of uuid_audio_stream is the channel UUID, which the bot receives as the first
+         message and uses to drive the call over the event socket. -->
+    <extension name="voice_agent">
+      <condition field="destination_number" expression="^9000$">
+        <action application="answer"/>
+        <action application="set" data='STREAM_EXTRA_HEADERS={"Authorization":"Bearer $${bot_token}"}'/>
+        <action application="set" data="STREAM_HEART_BEAT=$${stream_heart_beat}"/>
+        <action application="set" data="stream_result=${uuid_audio_stream(${uuid} start $${bot_ws_url} mono 8k ${uuid})}"/>
+        <action application="log" data="INFO voice_agent: uuid_audio_stream -> ${stream_result}"/>
+        <action application="park"/>
+      </condition>
+    </extension>
+
+    <!-- 9196: echo test, to check a softphone's audio without the bot. -->
+    <extension name="echo">
+      <condition field="destination_number" expression="^9196$">
+        <action application="answer"/>
+        <action application="echo"/>
+      </condition>
+    </extension>
+  </context>
+</include>

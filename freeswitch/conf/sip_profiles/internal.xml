@@ -1,0 +1,25 @@
+<profile name="internal">
+  <settings>
+    <param name="sip-ip" value="$${local_ip_v4}"/>
+    <param name="rtp-ip" value="$${local_ip_v4}"/>
+    <!-- The container sits behind Docker's NAT: advertise the address phones can reach (EXTERNAL_IP). -->
+    <param name="ext-sip-ip" value="$${external_ip}"/>
+    <param name="ext-rtp-ip" value="$${external_ip}"/>
+    <!-- Required for mod_audio_stream playback: bot audio is paced by FreeSWITCH's own timer. -->
+    <param name="rtp-timer-name" value="soft"/>
+    <param name="sip-port" value="$${internal_sip_port}"/>
+    <param name="dialplan" value="XML"/>
+    <param name="context" value="default"/>
+    <param name="auth-calls" value="true"/>
+    <!-- Any domain a phone registers with (127.0.0.1, the LAN address...) maps to the one domain. -->
+    <param name="force-register-domain" value="$${domain}"/>
+    <param name="force-subscription-domain" value="$${domain}"/>
+    <param name="force-register-db-domain" value="$${domain}"/>
+    <!-- Phones are always behind NAT from here: answer to where the packets came from. -->
+    <param name="NDLB-force-rport" value="true"/>
+    <param name="aggressive-nat-detection" value="true"/>
+    <param name="inbound-codec-prefs" value="$${global_codec_prefs}"/>
+    <param name="outbound-codec-prefs" value="$${global_codec_prefs}"/>
+    <param name="inbound-codec-negotiation" value="generous"/>
+  </settings>
+</profile>
