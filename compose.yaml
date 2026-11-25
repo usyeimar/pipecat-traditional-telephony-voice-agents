@@ -1,0 +1,93 @@
+name: pipecat-traditional-telephony-voice-agents
+
+# The bot always runs. Each PBX is a profile; choose with COMPOSE_PROFILES in .env or on the
+# command line:
+#
+#   docker compose --profile asterisk up -d
+#   docker compose --profile freeswitch up -d
+
+# Shared by both PBXs.
+x-pbx-environment: &pbx-environment
+  # Address phones use to reach this machine. 127.0.0.1 works for a softphone on the same
+  # computer; use the LAN address for other devices.
+  EXTERNAL_IP: ${EXTERNAL_IP:-127.0.0.1}
+  SIP_PASSWORD: ${SIP_PASSWORD:?set SIP_PASSWORD in .env}
+  BOT_TOKEN: ${BOT_TOKEN:?set BOT_TOKEN in .env}
+
+services:
+  # The Pipecat voice agent. The PBXs connect to it at ws://bot:8765/ws/<pbx>.
+  bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: "8765"
+      FREESWITCH_ESL_HOST: freeswitch
+      FREESWITCH_ESL_PORT: "8021"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./src
+          target: /app/src
+        - action: sync+restart
+          path: ./prompts
+          target: /app/prompts
+        - action: rebuild
+          path: ./uv.lock
+
+  # Asterisk with chan_websocket. The first build compiles Asterisk from source (~5 min).
+  asterisk:
+    profiles: [asterisk]
+    build: ./asterisk
+    restart: unless-stopped
+    environment:
+      <<: *pbx-environment
+      # Asterisk listens on this port inside the container too: phones send later requests to
+      # the port it advertises, so both sides of the mapping must be the same.
+      ASTERISK_SIP_PORT: ${ASTERISK_SIP_PORT:-5070}
+      # Use ws://host.docker.internal:8765/ws/asterisk to run the bot on the host.
+      ASTERISK_BOT_WS_URL: ${ASTERISK_BOT_WS_URL:-ws://bot:8765/ws/asterisk}
+    ports:
+      - "${ASTERISK_SIP_PORT:-5070}:${ASTERISK_SIP_PORT:-5070}/udp"   # SIP
+      - "17000-17040:17000-17040/udp"   # RTP (rtp.conf uses the same range)
+    volumes:
+      - ./asterisk/conf:/etc/asterisk/templates:ro
+    healthcheck:
+      test: ["CMD", "asterisk", "-rx", "core show uptime"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
+  # FreeSWITCH with mod_audio_stream. The first build compiles FreeSWITCH from source (15-30 min).
+  freeswitch:
+    profiles: [freeswitch]
+    build: ./freeswitch
+    restart: unless-stopped
+    environment:
+      <<: *pbx-environment
+      # Same port inside and outside the container, as for Asterisk.
+      SIP_PORT: ${SIP_PORT:-5080}
+      FREESWITCH_ESL_PASSWORD: ${FREESWITCH_ESL_PASSWORD:?set FREESWITCH_ESL_PASSWORD in .env}
+      # Use ws://host.docker.internal:8765/ws/freeswitch to run the bot on the host.
+      BOT_WS_URL: ${BOT_WS_URL:-ws://bot:8765/ws/freeswitch}
+    ports:
+      - "${SIP_PORT:-5080}:${SIP_PORT:-5080}/udp"   # SIP
+      - "${SIP_PORT:-5080}:${SIP_PORT:-5080}/tcp"
+      - "16384-16424:16384-16424/udp"   # RTP (switch.conf.xml uses the same range)
+      - "127.0.0.1:8021:8021/tcp"       # event socket, for a bot running on the host
+    volumes:
+      - ./freeswitch/conf:/usr/local/freeswitch/etc/freeswitch:ro
+    healthcheck:
+      test: ["CMD-SHELL", "fs_cli -p \"$$FREESWITCH_ESL_PASSWORD\" -x status | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
