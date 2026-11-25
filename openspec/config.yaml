@@ -1,0 +1,43 @@
+schema: spec-driven
+
+context: |
+  Producto: agente de voz con Pipecat que atiende llamadas de centralitas
+  tradicionales (Asterisk y FreeSWITCH). La centralita es dueña de la llamada
+  (numeración, enrutamiento, transferencias); el agente es dueño de la
+  conversación.
+
+  Stack: Python 3.12+, Pipecat 1.17, FastAPI + uvicorn, uv, pytest, ruff.
+  Servicios: Deepgram (voz a texto), Claude (LLM), Cartesia (texto a voz).
+  Centralitas en Docker, compiladas desde fuente con versión fijada.
+
+  Capas (todo en `src/`, sin paquete instalable; se ejecuta `src/main.py`):
+  - `config.py`: configuración leída del entorno y validada al arrancar.
+  - `agent/`: la conversación. NO DEBE saber de qué centralita viene la llamada.
+  - `telephony/`: un adaptador por centralita. Cada uno autentica el WebSocket,
+    crea el transporte de Pipecat con su serializer y entrega una `CallSession`
+    a `agent.run_call`.
+  - `app.py`: monta un endpoint por centralita (`/ws/asterisk`, `/ws/freeswitch`).
+
+  Restricciones que un cambio debe respetar:
+  - Audio G.711 a 8 kHz de extremo a extremo; el pipeline corre a la frecuencia
+    de la llamada para no remuestrear.
+  - Todo WebSocket se autentica antes de aceptarse.
+  - Las herramientas del LLM NO DEBEN aceptar números ni destinos libres.
+  - La configuración de despliegue (IP, puertos, secretos) entra por variables
+    de entorno; nunca se escribe en los archivos de la centralita.
+  - Una llamada no comparte estado con otras.
+
+  Verificación: `uv run pytest` y `uv run ruff check .`. Lo que toca audio o
+  señalización se comprueba además con una llamada contra la centralita en
+  Docker (ver README, "Comprueba sin teléfono").
+
+  Idioma de los artefactos: español. Normativo con DEBE / NO DEBE.
+  Código, comentarios y mensajes de commit: inglés. Commits convencionales
+  (`tipo(ámbito): asunto`) con cuerpo.
+
+rules:
+  proposal:
+    - Indicar qué queda fuera de alcance
+    - Decir a qué centralita afecta (Asterisk, FreeSWITCH o ambas)
+  tasks:
+    - Incluir la prueba unitaria y, si toca audio o señalización, la llamada de prueba contra la centralita
