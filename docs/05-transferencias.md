@@ -40,7 +40,7 @@ Igual en las dos centralitas. Vive en [`src/agent/tools.py`](../src/agent/tools.
 ```python
 from typing import Literal
 
-DESTINATIONS = {"ventas": "2001", "soporte": "2002"}   # nombre -> extensión
+DESTINATIONS = {"ventas": "2001", "soporte": "2002"}  # nombre -> extensión
 
 
 async def transfer_call(params: FunctionCallParams, department: Literal["ventas", "soporte"]):
@@ -52,7 +52,7 @@ async def transfer_call(params: FunctionCallParams, department: Literal["ventas"
     Args:
         department: Who should take the call.
     """
-    session = params.app_resources          # la CallSession de esta llamada
+    session = params.app_resources  # la CallSession de esta llamada
     await session.request_transfer(DESTINATIONS[department])
     await params.result_callback({"success": True})
     # Termina la conversación; el adaptador NO debe colgar (ver cada centralita).
@@ -122,6 +122,7 @@ exporta el cliente necesario:
 
 ```python
 from pipecat_freeswitch import ESLConnection
+
 
 async def request_transfer(self, extension: str) -> None:
     conn = await ESLConnection.connect(host, port, password, timeout=5.0)

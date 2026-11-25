@@ -106,6 +106,7 @@ resto del pipeline (contexto, herramientas) no se toca:
 # src/agent/services.py
 from pipecat.services.openai.llm import OpenAILLMService
 
+
 def build_llm(settings):
     return OpenAILLMService(
         api_key=settings.openai_api_key,
